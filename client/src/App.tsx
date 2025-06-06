@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Properties from "@/pages/properties";
+import Tenants from "@/pages/tenants";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/properties" component={Properties} />
+          <Route path="/tenants" component={Tenants} />
         </>
       )}
       <Route component={NotFound} />
