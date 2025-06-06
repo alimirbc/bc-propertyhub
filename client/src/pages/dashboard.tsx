@@ -5,10 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/ui/sidebar";
-import { Building, DollarSign, Users, AlertTriangle, Plus, Eye } from "lucide-react";
+import { Building, DollarSign, Users, AlertTriangle, Plus, Eye, ArrowRight } from "lucide-react";
+import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useEffect } from "react";
+import { NavigationHeader } from "@/components/navigation-header";
 
 interface DashboardStats {
   totalProperties: number;
@@ -90,23 +92,30 @@ export default function Dashboard() {
   };
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <main className="flex-1 p-6">
+    <div className="min-h-screen bg-gray-50">
+      <NavigationHeader />
+      <main className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <SidebarTrigger />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Welcome back, {user?.firstName || user?.email}
-              </h1>
-              <p className="text-gray-500">Here's an overview of your property portfolio</p>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Welcome back!
+            </h1>
+            <p className="text-gray-500">Here's an overview of your property portfolio</p>
           </div>
-          <Button className="bg-primary hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Property
-          </Button>
+          <div className="flex gap-2">
+            <Link href="/tenants">
+              <Button variant="outline">
+                <Users className="w-4 h-4 mr-2" />
+                Manage Tenants
+              </Button>
+            </Link>
+            <Link href="/properties">
+              <Button className="bg-primary hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Property
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -172,10 +181,12 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Recent Properties</CardTitle>
-            <Button variant="outline" size="sm">
-              <Eye className="w-4 h-4 mr-2" />
-              View All
-            </Button>
+            <Link href="/properties">
+              <Button variant="outline" size="sm">
+                <Eye className="w-4 h-4 mr-2" />
+                View All
+              </Button>
+            </Link>
           </CardHeader>
           <CardContent>
             {properties && properties.length > 0 ? (
@@ -214,6 +225,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </main>
-    </SidebarProvider>
+    </div>
   );
 }
