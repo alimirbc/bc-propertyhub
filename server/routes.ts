@@ -21,6 +21,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Tenant routes
+  app.get("/api/tenants", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const propertyId = req.query.propertyId;
+      
+      if (propertyId) {
+        const tenants = await storage.getTenants(parseInt(propertyId), userId);
+        res.json(tenants);
+      } else {
+        // Get all tenants for all user properties
+        const properties = await storage.getProperties(userId);
+        const allTenants = [];
+        for (const property of properties) {
+          const tenants = await storage.getTenants(property.id, userId);
+          allTenants.push(...tenants);
+        }
+        res.json(allTenants);
+      }
+    } catch (error) {
+      console.error("Error fetching tenants:", error);
+      res.status(500).json({ message: "Failed to fetch tenants" });
+    }
+  });
+
+  app.post("/api/tenants", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tenantData = req.body;
+      
+      // Validate that the property belongs to the user
+      const property = await storage.getProperty(tenantData.propertyId, userId);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      const tenant = await storage.createTenant(tenantData, userId);
+      res.status(201).json(tenant);
+    } catch (error) {
+      console.error("Error creating tenant:", error);
+      res.status(500).json({ message: "Failed to create tenant" });
+    }
+  });
+
+  app.put("/api/tenants/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tenantId = parseInt(req.params.id);
+      const updateData = req.body;
+
+      const tenant = await storage.updateTenant(tenantId, updateData, userId);
+      if (!tenant) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+
+      res.json(tenant);
+    } catch (error) {
+      console.error("Error updating tenant:", error);
+      res.status(500).json({ message: "Failed to update tenant" });
+    }
+  });
+
+  app.delete("/api/tenants/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tenantId = parseInt(req.params.id);
+
+      const success = await storage.deleteTenant(tenantId, userId);
+      if (!success) {
+        return res.status(404).json({ message: "Tenant not found" });
+      }
+
+      res.json({ message: "Tenant deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting tenant:", error);
+      res.status(500).json({ message: "Failed to delete tenant" });
+    }
+  });
+
   // Dashboard stats
   app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
     try {

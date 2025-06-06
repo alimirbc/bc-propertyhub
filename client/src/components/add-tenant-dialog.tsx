@@ -39,10 +39,8 @@ const tenantFormSchema = z.object({
   leaseEnd: z.date({ required_error: "Lease end date is required" }),
   rentAmount: z.string().min(1, "Monthly rent is required"),
   depositAmount: z.string().min(1, "Security deposit is required"),
-  emergencyContact: z.object({
-    name: z.string().optional(),
-    phone: z.string().optional(),
-  }).optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().optional(),
 });
 
 type TenantFormData = z.infer<typeof tenantFormSchema>;
@@ -56,7 +54,6 @@ interface AddTenantDialogProps {
 export function AddTenantDialog({ open, onOpenChange, propertyId }: AddTenantDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<TenantFormData>({
     resolver: zodResolver(tenantFormSchema),
@@ -66,13 +63,10 @@ export function AddTenantDialog({ open, onOpenChange, propertyId }: AddTenantDia
       lastName: "",
       email: "",
       phone: "",
+      rentAmount: "",
+      depositAmount: "",
       emergencyContactName: "",
       emergencyContactPhone: "",
-      monthlyRent: "",
-      securityDeposit: "",
-      leaseTerms: "",
-      notes: "",
-      status: "active",
     },
   });
 
@@ -80,10 +74,14 @@ export function AddTenantDialog({ open, onOpenChange, propertyId }: AddTenantDia
     mutationFn: async (data: TenantFormData) => {
       const payload = {
         ...data,
-        leaseStartDate: data.leaseStartDate.toISOString(),
-        leaseEndDate: data.leaseEndDate.toISOString(),
-        monthlyRent: parseFloat(data.monthlyRent),
-        securityDeposit: parseFloat(data.securityDeposit),
+        leaseStart: data.leaseStart.toISOString(),
+        leaseEnd: data.leaseEnd.toISOString(),
+        rentAmount: data.rentAmount,
+        depositAmount: data.depositAmount,
+        emergencyContact: {
+          name: data.emergencyContactName,
+          phone: data.emergencyContactPhone,
+        },
       };
       await apiRequest("POST", "/api/tenants", payload);
     },
@@ -107,9 +105,7 @@ export function AddTenantDialog({ open, onOpenChange, propertyId }: AddTenantDia
   });
 
   const onSubmit = (data: TenantFormData) => {
-    setIsSubmitting(true);
     mutation.mutate(data);
-    setIsSubmitting(false);
   };
 
   return (
@@ -226,7 +222,7 @@ export function AddTenantDialog({ open, onOpenChange, propertyId }: AddTenantDia
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="leaseStartDate"
+                  name="leaseStart"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Lease Start Date</FormLabel>
@@ -255,7 +251,7 @@ export function AddTenantDialog({ open, onOpenChange, propertyId }: AddTenantDia
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) =>
-                              date < new Date() || date < new Date("1900-01-01")
+                              date < new Date("1900-01-01")
                             }
                             initialFocus
                           />
@@ -268,7 +264,7 @@ export function AddTenantDialog({ open, onOpenChange, propertyId }: AddTenantDia
 
                 <FormField
                   control={form.control}
-                  name="leaseEndDate"
+                  name="leaseEnd"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Lease End Date</FormLabel>
@@ -297,7 +293,7 @@ export function AddTenantDialog({ open, onOpenChange, propertyId }: AddTenantDia
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) =>
-                              date < new Date() || date < new Date("1900-01-01")
+                              date < new Date("1900-01-01")
                             }
                             initialFocus
                           />
@@ -310,7 +306,7 @@ export function AddTenantDialog({ open, onOpenChange, propertyId }: AddTenantDia
 
                 <FormField
                   control={form.control}
-                  name="monthlyRent"
+                  name="rentAmount"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Monthly Rent ($)</FormLabel>
@@ -324,7 +320,7 @@ export function AddTenantDialog({ open, onOpenChange, propertyId }: AddTenantDia
 
                 <FormField
                   control={form.control}
-                  name="securityDeposit"
+                  name="depositAmount"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Security Deposit ($)</FormLabel>
@@ -335,61 +331,7 @@ export function AddTenantDialog({ open, onOpenChange, propertyId }: AddTenantDia
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="former">Former</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
-            </div>
-
-            {/* Additional Information */}
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="leaseTerms"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Lease Terms</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Enter specific lease terms..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notes</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Additional notes about the tenant..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
 
             <div className="flex justify-end space-x-2">
@@ -400,8 +342,8 @@ export function AddTenantDialog({ open, onOpenChange, propertyId }: AddTenantDia
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting || mutation.isPending}>
-                {isSubmitting || mutation.isPending ? "Adding..." : "Add Tenant"}
+              <Button type="submit" disabled={mutation.isPending}>
+                {mutation.isPending ? "Adding..." : "Add Tenant"}
               </Button>
             </div>
           </form>

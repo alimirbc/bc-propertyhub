@@ -35,6 +35,7 @@ export interface IStorage {
   getTenant(id: number, userId: string): Promise<Tenant | undefined>;
   createTenant(tenant: InsertTenant, userId: string): Promise<Tenant>;
   updateTenant(id: number, tenant: Partial<InsertTenant>, userId: string): Promise<Tenant | undefined>;
+  deleteTenant(id: number, userId: string): Promise<boolean>;
   
   // Maintenance operations
   getMaintenanceRequests(propertyId: number, userId: string): Promise<MaintenanceRequest[]>;
@@ -164,6 +165,15 @@ export class DatabaseStorage implements IStorage {
       .where(eq(tenants.id, id))
       .returning();
     return updatedTenant;
+  }
+
+  async deleteTenant(id: number, userId: string): Promise<boolean> {
+    // First verify the tenant belongs to user's property
+    const existingTenant = await this.getTenant(id, userId);
+    if (!existingTenant) return false;
+
+    await db.delete(tenants).where(eq(tenants.id, id));
+    return true;
   }
 
   // Maintenance operations
